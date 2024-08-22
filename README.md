@@ -16,10 +16,13 @@
 1. Убедитесь, что у вас установлен Python 3.6 или выше.
 2. Клонируйте репозиторий:
 
-```git clone https://github.com/your-username/personal-finance-app.git```
-3. Перейдите в директорию проекта:
+```git clone https://github.com/sphrx/personal-finance-app.git```
+3. Для установки необходимых зависимостей выполните следующую команду:
+```pip install -r requirements.txt```
+
+4. Перейдите в директорию проекта:
 ```cd personal-finance-app```
-4. Запустите приложение:
+5. Запустите приложение:
 ```python src/main.py```
 
 ## Использование
