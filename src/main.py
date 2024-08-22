@@ -1,11 +1,13 @@
 import os
 from pathlib import Path
+import csv
+from datetime import datetime
 
 # Определение путей к файлам данных
 ROOT_DIR = Path(__file__).parent.parent
 DATA_DIR = ROOT_DIR / "data"
 BALANCE_FILE = DATA_DIR / "balance.txt"
-TRANSACTIONS_FILE = DATA_DIR / "transactions.txt"
+TRANSACTIONS_FILE = DATA_DIR / "transactions.csv"
 
 def read_balance():
     if not BALANCE_FILE.exists():
@@ -20,12 +22,23 @@ def write_balance(balance):
 def read_transactions():
     if not TRANSACTIONS_FILE.exists():
         return []
-    with open(TRANSACTIONS_FILE, 'r') as f:
-        return f.readlines()
+    with open(TRANSACTIONS_FILE, 'r', newline='') as f:
+        reader = csv.DictReader(f)
+        return list(reader)
 
 def add_transaction(amount, description):
-    with open(TRANSACTIONS_FILE, 'a') as f:
-        f.write(f"{amount},{description}\n")
+    fieldnames = ['date', 'amount', 'description']
+    file_exists = TRANSACTIONS_FILE.exists()
+
+    with open(TRANSACTIONS_FILE, 'a', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow({
+            'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'amount': amount,
+            'description': description
+        })
 
 def get_transaction_input():
     while True:
@@ -52,8 +65,16 @@ def show_balance(balance):
 def show_transactions(transactions):
     print("\n--- История транзакций ---")
     for transaction in transactions:
-        amount, description = transaction.strip().split(',', 1)
-        print(f"{amount} - {description}")
+        print(f"{transaction['date']} - {transaction['amount']} - {transaction['description']}")
+
+def get_transaction_input():
+    while True:
+        try:
+            amount = int(input("Введите сумму транзакции (положительную для дохода, отрицательную для расхода): "))
+            description = input("Введите описание транзакции: ")
+            return amount, description
+        except ValueError:
+            print("Ошибка: Введите целое число для суммы.")
 
 def main():
     print("Добро пожаловать в приложение персонального финансового учета!")
