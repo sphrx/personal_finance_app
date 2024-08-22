@@ -27,12 +27,34 @@ def add_transaction(amount, description):
     with open(TRANSACTIONS_FILE, 'a') as f:
         f.write(f"{amount},{description}\n")
 
+def get_transaction_input():
+    while True:
+        try:
+            amount = int(input("Введите сумму транзакции (положительную для дохода, отрицательную для расхода): "))
+            description = input("Введите описание транзакции: ")
+            return amount, description
+        except ValueError:
+            print("Ошибка: Введите целое число для суммы.")
+
+def update_balance(current_balance, transaction_amount):
+    return current_balance + transaction_amount
+
 def main():
     print("Добро пожаловать в приложение персонального финансового учета!")
+
     balance = read_balance()
     transactions = read_transactions()
+
     print(f"Текущий баланс: {balance}")
     print(f"Количество транзакций: {len(transactions)}")
+
+    amount, description = get_transaction_input()
+    add_transaction(amount, description)
+
+    new_balance = update_balance(balance, amount)
+    write_balance(new_balance)
+
+    print(f"Транзакция добавлена. Новый баланс: {new_balance}")
 
 if __name__ == "__main__":
     main()
