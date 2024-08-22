@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 import csv
 from datetime import datetime
@@ -72,14 +71,31 @@ def show_transactions(transactions):
         amount = Decimal(transaction['amount'])
         print(f"{transaction['date']} - {amount:.2f} - {transaction['description']} - {transaction['category']}")
 
-def get_transaction_input():
+def validate_amount(amount_str):
+    try:
+        amount = Decimal(amount_str)
+        return amount
+    except InvalidOperation:
+        raise ValueError("Некорректная сумма. Пожалуйста, введите число.")
+
+def validate_category(category):
+    if not category.strip():
+        raise ValueError("Категория не может быть пустой.")
+    return category.strip()
+
+def safe_input(prompt, validator):
     while True:
         try:
-            amount = Decimal(input("Введите сумму транзакции (положительную для дохода, отрицательную для расхода): "))
-            description = input("Введите описание транзакции: ")
-            return amount, description
-        except InvalidOperation:
-            print("Ошибка: Введите корректное число для суммы.")
+            user_input = input(prompt)
+            return validator(user_input)
+        except ValueError as e:
+            print(f"Ошибка: {e}")
+
+def get_transaction_input():
+    amount = safe_input("Введите сумму транзакции (положительную для дохода, отрицательную для расхода): ", validate_amount)
+    description = input("Введите описание транзакции: ")
+    category = safe_input("Введите категорию транзакции: ", validate_category)
+    return amount, description, category
 
 def generate_report(transactions):
     category_totals = defaultdict(Decimal)
@@ -109,7 +125,8 @@ def main():
         transactions = read_transactions()
 
         display_menu()
-        choice = input("Выберите действие (1-5): ")
+        choice = safe_input("Выберите действие (1-5): ",
+                            lambda x: x if x in ['1', '2', '3', '4', '5'] else ValueError("Неверный выбор"))
 
         if choice == '1':
             show_balance(balance)
@@ -126,8 +143,6 @@ def main():
         elif choice == '5':
             print("Спасибо за использование приложения. До свидания!")
             break
-        else:
-            print("Неверный выбор. Пожалуйста, выберите число от 1 до 5.")
 
 
 if __name__ == "__main__":
