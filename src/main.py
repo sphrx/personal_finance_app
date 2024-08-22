@@ -39,22 +39,47 @@ def get_transaction_input():
 def update_balance(current_balance, transaction_amount):
     return current_balance + transaction_amount
 
+def display_menu():
+    print("\n--- Меню ---")
+    print("1. Показать баланс")
+    print("2. Добавить транзакцию")
+    print("3. Показать историю транзакций")
+    print("4. Выйти")
+
+def show_balance(balance):
+    print(f"\nТекущий баланс: {balance}")
+
+def show_transactions(transactions):
+    print("\n--- История транзакций ---")
+    for transaction in transactions:
+        amount, description = transaction.strip().split(',', 1)
+        print(f"{amount} - {description}")
+
 def main():
     print("Добро пожаловать в приложение персонального финансового учета!")
 
-    balance = read_balance()
-    transactions = read_transactions()
+    while True:
+        balance = read_balance()
+        transactions = read_transactions()
 
-    print(f"Текущий баланс: {balance}")
-    print(f"Количество транзакций: {len(transactions)}")
+        display_menu()
+        choice = input("Выберите действие (1-4): ")
 
-    amount, description = get_transaction_input()
-    add_transaction(amount, description)
-
-    new_balance = update_balance(balance, amount)
-    write_balance(new_balance)
-
-    print(f"Транзакция добавлена. Новый баланс: {new_balance}")
+        if choice == '1':
+            show_balance(balance)
+        elif choice == '2':
+            amount, description = get_transaction_input()
+            add_transaction(amount, description)
+            new_balance = update_balance(balance, amount)
+            write_balance(new_balance)
+            print(f"Транзакция добавлена. Новый баланс: {new_balance}")
+        elif choice == '3':
+            show_transactions(transactions)
+        elif choice == '4':
+            print("Спасибо за использование приложения. До свидания!")
+            break
+        else:
+            print("Неверный выбор. Пожалуйста, выберите число от 1 до 4.")
 
 if __name__ == "__main__":
     main()
