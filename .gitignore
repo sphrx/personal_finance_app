@@ -1,8 +1,9 @@
 # Игнорировать все файлы в папке data, кроме .gitkeep
 data/*
+/data/
 !data/.gitkeep
-!data/transactions.csv
 
 # Игнорировать файлы кэша Python
 __pycache__/
 *.pyc
+
