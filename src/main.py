@@ -1,8 +1,10 @@
+import os
 from pathlib import Path
 import csv
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from collections import defaultdict
+from settings import load_settings, save_settings
 
 # Определение путей к файлам данных
 ROOT_DIR = Path(__file__).parent.parent
@@ -92,7 +94,10 @@ def safe_input(prompt, validator):
             print(f"Ошибка: {e}")
 
 def get_transaction_input():
-    amount = safe_input("Введите сумму транзакции (положительную для дохода, отрицательную для расхода): ", validate_amount)
+    amount = safe_input(
+        "Введите сумму транзакции (положительную для дохода, отрицательную для расхода): ",
+        validate_amount
+    )
     description = input("Введите описание транзакции: ")
     category = safe_input("Введите категорию транзакции: ", validate_category)
     return amount, description, category
@@ -108,25 +113,81 @@ def generate_report(transactions):
     for category, total in category_totals.items():
         print(f"{category}: {total:.2f}")
 
+
+def analyze_expenses(transactions, settings):
+    category_totals = defaultdict(Decimal)
+    for transaction in transactions:
+        amount = Decimal(transaction['amount'])
+        if amount < 0:  # только расходы
+            category = transaction['category']
+            category_totals[category] -= amount  # меняем знак, чтобы расходы были положительными
+
+    print("\n--- Анализ расходов ---")
+    total_expenses = sum(category_totals.values())
+    budget_limit = Decimal(settings['budget_limit'])
+
+    for category, total in category_totals.items():
+        percentage = (total / total_expenses) * 100 if total_expenses > 0 else 0
+        print(f"{category}: {total:.2f} {settings['currency']} ({percentage:.1f}%)")
+
+    print(f"\nОбщие расходы: {total_expenses:.2f} {settings['currency']}")
+    print(f"Бюджетный лимит: {budget_limit:.2f} {settings['currency']}")
+
+    if total_expenses > budget_limit:
+        overspend = total_expenses - budget_limit
+        print(f"Превышение бюджета на {overspend:.2f} {settings['currency']}!")
+    else:
+        underspend = budget_limit - total_expenses
+        print(f"Вы сэкономили {underspend:.2f} {settings['currency']}.")
+
+
+def edit_settings(settings):
+    print("\n--- Редактирование настроек ---")
+    settings['currency'] = input(f"Введите валюту (текущая: {settings['currency']}): ") or settings['currency']
+
+    while True:
+        try:
+            new_limit = input(f"Введите новый бюджетный лимит (текущий: {settings['budget_limit']}): ")
+            if new_limit:
+                settings['budget_limit'] = Decimal(new_limit)
+            break
+        except InvalidOperation:
+            print("Пожалуйста, введите корректное число.")
+
+    print("Текущие категории:")
+    for i, category in enumerate(settings['categories'], 1):
+        print(f"{i}. {category}")
+
+    new_category = input("Введите новую категорию (или нажмите Enter, чтобы пропустить): ")
+    if new_category:
+        settings['categories'].append(new_category)
+
+    save_settings(settings)
+    print("Настройки сохранены.")
+
+
 def display_menu():
     print("\n--- Меню ---")
     print("1. Показать баланс")
     print("2. Добавить транзакцию")
     print("3. Показать историю транзакций")
     print("4. Сгенерировать отчет")
-    print("5. Выйти")
+    print("5. Анализ расходов")
+    print("6. Редактировать настройки")
+    print("7. Выйти")
 
 
 def main():
     print("Добро пожаловать в приложение персонального финансового учета!")
+    settings = load_settings()
 
     while True:
         balance = read_balance()
         transactions = read_transactions()
 
         display_menu()
-        choice = safe_input("Выберите действие (1-5): ",
-                            lambda x: x if x in ['1', '2', '3', '4', '5'] else ValueError("Неверный выбор"))
+        choice = safe_input("Выберите действие (1-7): ",
+                            lambda x: x if x in ['1', '2', '3', '4', '5', '6', '7'] else ValueError("Неверный выбор"))
 
         if choice == '1':
             show_balance(balance)
@@ -135,16 +196,21 @@ def main():
             add_transaction(amount, description, category)
             new_balance = update_balance(balance, amount)
             write_balance(new_balance)
-            print(f"Транзакция добавлена. Новый баланс: {new_balance:.2f}")
+            print(f"Транзакция добавлена. Новый баланс: {new_balance:.2f} {settings['currency']}")
         elif choice == '3':
             show_transactions(transactions)
         elif choice == '4':
             generate_report(transactions)
         elif choice == '5':
+            analyze_expenses(transactions, settings)
+        elif choice == '6':
+            edit_settings(settings)
+        elif choice == '7':
             print("Спасибо за использование приложения. До свидания!")
             break
 
 
 if __name__ == "__main__":
     main()
+
 
