@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import csv
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 
 # Определение путей к файлам данных
 ROOT_DIR = Path(__file__).parent.parent
@@ -11,9 +12,9 @@ TRANSACTIONS_FILE = DATA_DIR / "transactions.csv"
 
 def read_balance():
     if not BALANCE_FILE.exists():
-        return 0
+        return Decimal('0')
     with open(BALANCE_FILE, 'r') as f:
-        return int(f.read().strip())
+        return Decimal(f.read().strip())
 
 def write_balance(balance):
     with open(BALANCE_FILE, 'w') as f:
@@ -60,7 +61,7 @@ def display_menu():
     print("4. Выйти")
 
 def show_balance(balance):
-    print(f"\nТекущий баланс: {balance}")
+    print(f"\nТекущий баланс: {balance:.2f}")
 
 def show_transactions(transactions):
     print("\n--- История транзакций ---")
@@ -70,11 +71,11 @@ def show_transactions(transactions):
 def get_transaction_input():
     while True:
         try:
-            amount = int(input("Введите сумму транзакции (положительную для дохода, отрицательную для расхода): "))
+            amount = Decimal(input("Введите сумму транзакции (положительную для дохода, отрицательную для расхода): "))
             description = input("Введите описание транзакции: ")
             return amount, description
-        except ValueError:
-            print("Ошибка: Введите целое число для суммы.")
+        except InvalidOperation:
+            print("Ошибка: Введите корректное число для суммы.")
 
 def main():
     print("Добро пожаловать в приложение персонального финансового учета!")
